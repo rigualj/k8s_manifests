@@ -46,8 +46,8 @@ spec:
           httpGet:
             path: /
             port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          initialDelaySeconds: 15
+          periodSeconds: 10
 
 ---
 apiVersion: v1
