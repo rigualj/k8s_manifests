@@ -2,31 +2,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-world
-  namespace: hello-world
+  name: hello-world-nginx
+  namespace: hello-world-nginx
   labels:
-    app: hello-world
+    app: hello-world-nginx
     version: "1.0"
+    
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: hello-world
+      app: hello-world-nginx
   template:
     metadata:
       labels:
-        app: hello-world
+        app: hello-world-nginx
         version: "1.0"
     spec:
       containers:
       - name: hello-world
-        image: gcr.io/google-samples/hello-app:1.0
+        image: nginxdemos/hello
         ports:
-        - containerPort: 8080
+        - containerPort: 80
           name: http
         env:
         - name: PORT
-          value: "8080"
+          value: "80"
         - name: TARGET
           value: "World"
         resources:
@@ -39,13 +40,13 @@ spec:
         livenessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /
-            port: 8080
+            port: 80
           initialDelaySeconds: 15
           periodSeconds: 10
 
@@ -53,41 +54,42 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-world-service
-  namespace: hello-world
+  name: hello-world-nginx-service
+  namespace: hello-world-nginx
   labels:
-    app: hello-world
+    app: hello-world-nginx
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 80
     protocol: TCP
     name: http
+    # nodePort: 30080  # Optional: specify port (30000-32767 range)
   selector:
-    app: hello-world
+    app: hello-world-nginx
 
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: hello-world-ingress
-  namespace: hello-world
+  name: hello-world-nginx-ingress
+  namespace: hello-world-nginx
   labels:
-    app: hello-world
+    app: hello-world-nginx
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-  - host: hello-world.local
+  - host: hello-world-nginx.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: hello-world-service
+            name: hello-world-nginx-service
             port:
               number: 80
 
@@ -95,10 +97,10 @@ spec:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: hello-world-config
-  namespace: hello-world
+  name: hello-world-nginx-config
+  namespace: hello-world-nginx
   labels:
-    app: hello-world
+    app: hello-world-nginx
 data:
   message: "Hello from Kubernetes deployed via Harness!"
   environment: "demo"
@@ -107,15 +109,15 @@ data:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: hello-world-hpa
-  namespace: hello-world
+  name: hello-world-nginx-hpa
+  namespace: hello-world-nginx
   labels:
-    app: hello-world
+    app: hello-world-nginx
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: hello-world
+    name: hello-world-nginx
   minReplicas: 2
   maxReplicas: 10
   metrics:
